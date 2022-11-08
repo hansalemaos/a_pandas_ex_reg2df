@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import tempfile
 from functools import partial
@@ -50,8 +51,15 @@ def regedit_to_dataframe(rootkey):
     df[0] = df[0].astype("category")
     df[1] = df[1].astype("category")
     df[0] = df[0].str.slice(1)
+    df.columns = ['aa_key', 'aa_values']
     return df
 
+def get_exe_files_from_all_installed_apps():
+    df=get_HKCU_df()
+    df=df.loc[df['aa_values'].str.contains(r'\.exe', flags=re.IGNORECASE)]['aa_values'].str.extract(
+        r'\\?"?([A-Z]:\\.*?\.exe)', flags=re.IGNORECASE).dropna().drop_duplicates().reset_index(drop=True)
+    df.columns = ['file_path']
+    return df
 
 def get_HKCU_df():
     return regedit_to_dataframe(rootkey="HKCU")
@@ -155,3 +163,6 @@ def pd_add_reg2df():
 
     pd.Q_get_HKCC_df = get_HKCC_df
     pd.Q_get_installed_apps = get_all_installed_windows_apps
+    pd.Q_get_exefiles_df = get_exe_files_from_all_installed_apps
+
+
